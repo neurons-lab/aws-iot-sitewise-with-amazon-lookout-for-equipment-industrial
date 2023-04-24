@@ -22,10 +22,14 @@ def handler(event, context):
     asset_model_id = event['ResourceProperties']['assetModelId']
     property_name = event['ResourceProperties']['propertyName']
     asset_model_property_id = get_asset_model_property_id(asset_model_id, property_name)
-    return {
+
+    cfn_response = {
         "Data": {
             "assetModelId": asset_model_id,
-            "AssetModelPropertyName": property_name,
-            "AssetModelPropertyId": asset_model_property_id
+            "propertyName": property_name,
+            "propertyId": asset_model_property_id
         }
     }
+    logger.info('Returning response: %s', cfn_response)
+
+    return cfn_response
