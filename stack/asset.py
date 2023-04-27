@@ -4,16 +4,16 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from lib.iot_sitewise_vessel_asset import TwoEngineVesselIoTSiteWiseAsset
+from lib.iot_sitewise_assets import TwoEngineVesselIoTSiteWiseAsset
 from lib.iot_sitewise_asset_models import VesselIoTSiteWiseAssetModel
 from lib.iot_sitewise_ingest import DataIngestToIoTSiteWiseAsset
+from lib.etl_pipeline import EtlPipeline
 
-PROPERTY_LIST = ["Sensor0", "Sensor1", "Sensor2", "Sensor3", "Sensor4",
-                 "Sensor5", "Sensor6", "Sensor7", "Sensor8", "Sensor9",
-                 "Sensor10", "Sensor11", "Sensor12", "Sensor13", "Sensor14",
-                 "Sensor15", "Sensor16", "Sensor17", "Sensor18", "Sensor19",
-                 "Sensor20", "Sensor21", "Sensor22", "Sensor23", "Sensor24",
-                 "Sensor25", "Sensor26", "Sensor27", "Sensor28", "Sensor29"]
+def get_property_list(template):
+    property_list = []
+    for i in range(30):
+        property_list.append(template.format(i))
+    return property_list
 
 class AwsAssetStack(Stack):
 
@@ -24,13 +24,22 @@ class AwsAssetStack(Stack):
                 ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        asset_models = VesselIoTSiteWiseAssetModel(self, "AssetModels")
+        self.property_list = get_property_list("Sensor{}")
+        self.score_property_list = get_property_list("Sensor{}L4EScore")
+        self.total_property_list = self.property_list + self.score_property_list
+
+        asset_models = VesselIoTSiteWiseAssetModel(
+            self, 
+            "AssetModels",
+            self.total_property_list
+        )
         vessel_asset_model, engine_asset_model = \
             asset_models.vessel_asset_model, asset_models.engine_asset_model
 
         vessel_asset = TwoEngineVesselIoTSiteWiseAsset(self, "TwoEngineVesselIoTSiteWiseAsset",
             vessel_asset_model,
-            engine_asset_model
+            engine_asset_model,
+            property_list=self.total_property_list
         )
 
         engine_asset_data = [
@@ -45,6 +54,8 @@ class AwsAssetStack(Stack):
         ]
 
         ingestion_construct = DataIngestToIoTSiteWiseAsset(self, "DataIngestToIoTSiteWiseAsset",
-            PROPERTY_LIST,
+            self.property_list,
             engine_asset_data
         )
+
+        etl_pipeline = EtlPipeline(self, "EtlPipeline", assets=vessel_asset, prefix="etlpipeline",)

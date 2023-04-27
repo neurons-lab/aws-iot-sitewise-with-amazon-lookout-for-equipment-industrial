@@ -53,10 +53,10 @@ class AlertModel(Construct):
             log_retention=logs.RetentionDays.ONE_DAY,
         )
 
-    def get_property_id(self, asset_model_id: str, property_name: str):
+    def get_property_id(self, name: str, asset_model_id: str, property_name: str):
         """Returns the asset model property id for the given asset model id and property name"""
         # custom resource to get the asset model property id for the Asset Model
-        asset_model_property_id = CustomResource(self, f'{id}GetAssetModelPropertyIdCustomResource',
+        asset_model_property_id = CustomResource(self, f'{id}{name}GetAssetModelPropertyIdCR',
             service_token=self.get_asset_model_property_id_provider.service_token,
             properties={
                 'assetModelId': asset_model_id,
@@ -65,14 +65,15 @@ class AlertModel(Construct):
         )
         return asset_model_property_id.get_att_string('propertyId')
 
-    def create_alert_model(self, id: str, asset_model_id: str, property_name: str, threshold_property_name: str):
+    def create_alert_model(self, id: str, asset_model_id: str, property_name: str, threshold_property_name: str, alert_property_name: str):
         """Creates an alert model for the given asset model id and property name"""
         self.asset_model_id = asset_model_id
-        self.property_id = self.get_property_id(asset_model_id, property_name)
-        self.threshold_property_id = self.get_property_id(asset_model_id, threshold_property_name)
+        self.property_id = self.get_property_id("Property", asset_model_id, property_name)
+        self.threshold_property_id = self.get_property_id("Threshold", asset_model_id, threshold_property_name)
+        self.alert_model = self.get_property_id("Alert", asset_model_id, alert_property_name)
 
        # Create IoT Event Alarm Model
-        self.avg_l4e_score_alarm = iotevents.CfnAlarmModel(self, f'{id}Alarm',
+        self.iot_event_alarm = iotevents.CfnAlarmModel(self, f'{id}Alarm',
             alarm_model_name=f'{id}Alarm',
             role_arn=self.alarm_role.role_arn,
             alarm_rule=iotevents.CfnAlarmModel.AlarmRuleProperty(
@@ -95,7 +96,7 @@ class AlertModel(Construct):
                     alarm_actions=[iotevents.CfnAlarmModel.AlarmActionProperty(
                         iot_site_wise=iotevents.CfnAlarmModel.IotSiteWiseProperty(
                             asset_id=f"$sitewise.assetModel.`{self.asset_model_id}`.`{self.property_id}`.assetId",
-                            property_id="'bd11027e-d0b0-46c5-bf2e-48cfada20eda'"
+                            property_id="'{self.alert_model}'"
                         )
                     )
                 ]
