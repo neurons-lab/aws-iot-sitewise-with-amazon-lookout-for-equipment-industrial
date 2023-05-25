@@ -21,6 +21,7 @@ from constructs import Construct
 TRANSFORM_LAMBDA_PATH = "lambda/transform_json_data/"
 METADATA_LAMBDA_PATH = "lambda/asset_metadata/"
 INFERENCE_SCHEDULE_LAMBDA_PATH = "lambda/inference_schedule/"
+L4E_TO_SITEWISE_LAMBDA_PATH = "lambda/l4e_to_sitewise/"
 
 class EtlPipeline(Construct):
     
@@ -665,6 +666,63 @@ class EtlPipeline(Construct):
             self.inference_schedule_lambda_permission0.add_dependency(self.inference_schedule_lambda)
             self.inference_schedule_lambda_permission1.add_dependency(self.inference_schedule_lambda)
 
+            # Inference Schedule Lambda Execution Role
+            self.l4e_to_sitewise_lambda_permission_role = iam.Role(
+                self,
+                f'{id}L4EToSitewiseLambdaPermissionRole',
+                assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+                managed_policies=[
+                    iam.ManagedPolicy.from_aws_managed_policy_name('AmazonS3FullAccess'),
+                    iam.ManagedPolicy.from_aws_managed_policy_name('AWSIoTSiteWiseFullAccess'),
+                ]
+            )
+            self.l4e_to_sitewise_lambda_permission_role.add_to_policy(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        'logs:GetLogEvents',
+                        'logs:PutLogEvents',
+                        'logs:CreateLogGroup',
+                        'logs:CreateLogStream',
+                    ],
+                    resources=['*']
+                )
+            )
+
+            # Lambda L4E to Sitewise
+            self.l4e_to_sitewise_lambda = _lambda.Function(
+                self,
+                f'{id}L4EToSitewiseLambda',
+                function_name=f'{prefix}_l4e_to_sitewise_lambda',
+                runtime=_lambda.Runtime.PYTHON_3_8,
+                handler="lambda_function.lambda_handler",
+                code=_lambda.Code.from_asset(L4E_TO_SITEWISE_LAMBDA_PATH),
+                timeout=Duration.seconds(180),
+                memory_size=128,
+                description="Lambda function to ingest data to IoT SiteWise asset",
+                environment={
+                    "Asset_L4E_Score": "AssetL4EScore",
+                },
+                role=self.l4e_to_sitewise_lambda_permission_role,
+            )
+
+            self.l4e_to_sitewise_lambda_permission0 = _lambda.CfnPermission(self,
+                f'{id}L4EToSitewiseLambdaPermission0',
+                function_name=self.l4e_to_sitewise_lambda.function_name,
+                action='lambda:InvokeFunction',
+                principal='s3.amazonaws.com',
+                source_account=Aws.ACCOUNT_ID,
+                source_arn=f'arn:aws:s3:::{prefix}-l4e-bucket0'
+            )
+            self.l4e_to_sitewise_lambda_permission1 = _lambda.CfnPermission(self,
+                f'{id}L4EToSitewiseLambdaPermission1',
+                function_name=self.l4e_to_sitewise_lambda.function_name,
+                action='lambda:InvokeFunction',
+                principal='s3.amazonaws.com',
+                source_account=Aws.ACCOUNT_ID,
+                source_arn=f'arn:aws:s3:::{prefix}-l4e-bucket1'
+            )
+
             # L4e Bucket Engine0 with event notification
             self.l4e_bucket0 = s3.CfnBucket(
                 self,
@@ -686,12 +744,17 @@ class EtlPipeline(Construct):
                                         s3.CfnBucket.FilterRuleProperty(
                                             name='suffix',
                                             value='.jsonl'
+                                        ),
+                                        s3.CfnBucket.FilterRuleProperty(
+                                            name='prefix',
+                                            value=f'{assets.engine_asset0.ref}/inference-data/output/'
                                         )
                                     ]
                                 )
                             ),
-                            function=self.inference_schedule_lambda.attr_arn
-                        )
+                            function=self.l4e_to_sitewise_lambda.function_arn
+                        ),
+                                          
                     ]
                 )
             )
@@ -717,17 +780,23 @@ class EtlPipeline(Construct):
                                         s3.CfnBucket.FilterRuleProperty(
                                             name='suffix',
                                             value='.jsonl'
+                                        ),
+                                        s3.CfnBucket.FilterRuleProperty(
+                                            name='prefix',
+                                            value=f'{assets.engine_asset1.ref}/inference-data/output/'
                                         )
                                     ]
                                 )
                             ),
-                            function=self.inference_schedule_lambda.attr_arn
+                            function=self.l4e_to_sitewise_lambda.function_arn
                         )
                     ]
                 )
             )
-            self.l4e_bucket0.add_dependency(self.inference_schedule_lambda_permission0)
-            self.l4e_bucket1.add_dependency(self.inference_schedule_lambda_permission1)
+
+
+            self.l4e_bucket0.add_dependency(self.l4e_to_sitewise_lambda_permission0)
+            self.l4e_bucket1.add_dependency(self.l4e_to_sitewise_lambda_permission1)
 
             # Inference Schedule Lambda Event Rule Engine0
             self.inference_schedule_lambda_event_rule0 = events.CfnRule(

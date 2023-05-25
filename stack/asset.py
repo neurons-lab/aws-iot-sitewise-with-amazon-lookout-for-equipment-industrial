@@ -9,6 +9,7 @@ from lib.iot_sitewise_ingest import DataIngestToIoTSiteWiseAsset
 from lib.etl_pipeline import EtlPipeline
 from lib.iot_sitewise_notebook import SiteWiseNotebook
 from lib.l4e_setup import L4ESetup
+from lib.l4e_to_sitewise import L4EToSitewise
 
 def get_property_list(template):
     property_list = []
@@ -61,6 +62,6 @@ class AwsAssetStack(Stack):
 
         etl_pipeline = EtlPipeline(self, "EtlPipeline", assets=vessel_asset, prefix="etlpipeline",)
 
-        notebook = SiteWiseNotebook(self, "SiteWiseNotebook", prefix="sitewisenotebook")
+        # notebook = SiteWiseNotebook(self, "SiteWiseNotebook", prefix="sitewisenotebook")
 
         l4e_inference = L4ESetup(self, "L4ETrain", self.property_list, engine_asset_data, prefix="l4etrain")
