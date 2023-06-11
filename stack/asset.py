@@ -9,7 +9,6 @@ from lib.iot_sitewise_ingest import DataIngestToIoTSiteWiseAsset
 from lib.etl_pipeline import EtlPipeline
 from lib.iot_sitewise_notebook import SiteWiseNotebook
 from lib.l4e_setup import L4ESetup
-from lib.l4e_to_sitewise import L4EToSitewise
 
 def get_property_list(template):
     property_list = []
