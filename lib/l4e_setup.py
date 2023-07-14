@@ -30,17 +30,17 @@ class L4ESetup(Construct):
                         "TrainingData": {
                             "Bucket": "etlpipeline-l4e-bucket0",
                             "KeyPattern": "{prefix}/{component_name}/*",
-                            "Prefix": "14136e4a-08fe-4a14-871d-d8aeb17e3dc2/training-data/"
+                            "Prefix": self.asset_data[0]["asset_id"] + "/training-data/"
                         },
                         "LableData": {
                             "Bucket": "etlpipeline-l4e-bucket0",
-                            "Prefix": "14136e4a-08fe-4a14-871d-d8aeb17e3dc2/label-data/"
+                            "Prefix": self.asset_data[0]["asset_id"] + "/label-data/"
                         },
                         "InferenceData": {
                             "InputBucket": "etlpipeline-l4e-bucket0",
-                            "InputPrefix": "14136e4a-08fe-4a14-871d-d8aeb17e3dc2/inference-data/input/",
+                            "InputPrefix": self.asset_data[0]["asset_id"] + "/inference-data/input/",
                             "OutputBucket": "etlpipeline-l4e-bucket0",
-                            "OutputPrefix": "14136e4a-08fe-4a14-871d-d8aeb17e3dc2/inference-data/output/"
+                            "OutputPrefix": self.asset_data[0]["asset_id"] + "/inference-data/output/"
                         },
                         "InlineDataSchema": "{\"Components\": [{\"ComponentName\": \"engine\", \"Columns\": [{\"Name\": \"Timestamp\", \"Type\": \"DATETIME\"}, {\"Name\": \"Sensor0\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor1\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor2\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor3\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor4\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor5\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor6\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor7\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor8\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor9\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor10\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor11\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor24\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor25\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor26\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor27\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor28\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor29\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor12\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor13\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor14\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor15\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor16\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor17\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor18\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor19\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor20\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor21\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor22\", \"Type\": \"DOUBLE\"}, {\"Name\": \"Sensor23\", \"Type\": \"DOUBLE\"}]}]}",
                         "ModelTraining": {

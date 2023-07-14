@@ -759,7 +759,7 @@ class EtlPipeline(Construct):
                 )
             )
 
-            # L4e Bucket Engine1 with event notification
+            # L4e Bucket asset1 with event notification
             self.l4e_bucket1 = s3.CfnBucket(
                 self,
                 f'{id}L4eBucket1',
